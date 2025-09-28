@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { login } from '@/stores/authStore';
 import axios from 'axios';
 
 const route = useRoute();
@@ -27,7 +28,7 @@ onMounted(async () => {
 
         // [5-1] AccessToken이 유효하면 localStorage에 저장 후 메인 페이지로 이동
         if (atk) {
-            localStorage.setItem("accessToken", atk);
+            login(atk);
             router.replace('/');
         }
         // [5-2] AccessToken이 유효하지 않으면 로그인 페이지로 이동

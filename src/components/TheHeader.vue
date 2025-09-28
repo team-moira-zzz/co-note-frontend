@@ -1,12 +1,33 @@
 <script setup>
 import { useRouter } from 'vue-router';
-import { isLoggedIn, userNickname, logout } from '../stores/authStore';
+import axios from 'axios';
+import { isLoggedIn, userNickname, logout, getAccessToken } from '../stores/authStore';
 
 const router = useRouter();
 
-const handleLogout = () => {
-  logout();
-  router.push('/login');
+const handleLogout = async () => {
+  const token = getAccessToken();
+
+  try {
+    // [1] Authorization 헤더에 AccessToken을 담아 요청
+    await axios.post('http://localhost:8080/api/logout', null, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    // [2] localStorage에서 AccessToken 제거
+    logout();
+
+    // [3] 로그인 페이지로 리다이렉트
+    router.push('/login');
+
+  } catch (error) {
+    console.error("로그아웃 API 호출 실패:", error);
+
+    logout();
+    router.push('/login?logout_failed=true');
+  }
 };
 </script>
 
@@ -15,7 +36,7 @@ const handleLogout = () => {
     <div class="logo">
       <router-link to="/">Co-Note</router-link>
     </div>
-    
+
     <nav class="auth-menu">
       <span v-if="isLoggedIn" class="user-greeting">
         <span class="nickname-text">{{ userNickname }}</span>님 안녕하세요!
@@ -75,8 +96,8 @@ const handleLogout = () => {
 }
 
 .nickname-text {
-    font-weight: bold;
-    color: #2c3e50;
+  font-weight: bold;
+  color: #2c3e50;
 }
 
 .logout-btn {

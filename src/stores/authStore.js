@@ -40,13 +40,18 @@ export const userNickname = computed(() => {
   return null;
 });
 
-// 로그인 (accessToken 저장)
+// AccessToken 획득
+export const getAccessToken = () => {
+    return accessToken.value;
+};
+
+// 로그인 (AccessToken 저장)
 export const login = (token) => {
   localStorage.setItem(TOKEN_KEY, token);
   accessToken.value = token;
 };
 
-// 로그아웃 (accessToken 제거)
+// 로그아웃 (AccessToken 제거)
 export const logout = () => {
   localStorage.removeItem(TOKEN_KEY);
   accessToken.value = null;

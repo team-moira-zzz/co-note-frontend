@@ -31,9 +31,12 @@ const handleNaverLogin = () => {
 .login-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
-    height: 100vh;
+    min-height: calc(100vh - 60px); 
+    width: 100%;
+    
+    padding-top: 80px; 
     gap: 20px;
 }
 

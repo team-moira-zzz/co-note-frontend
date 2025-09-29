@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import KakaoCallbackView from '../views/KakaoCallbackView.vue'
 import NaverCallbackView from '../views/NaverCallbackView.vue'
+import GroupCreateView from '../views/GroupCreateView.vue'
 
 const routes = [
     {
@@ -24,6 +25,11 @@ const routes = [
         path: '/login/naver/callback',
         name: 'naver-callback',
         component: NaverCallbackView
+    },
+    {
+        path: '/group/create',
+        name: 'create-group',
+        component: GroupCreateView
     }
 ]
 

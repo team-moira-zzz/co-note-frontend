@@ -15,8 +15,7 @@ const goToLogin = () => {
 
 // 로그인 사용자: '가계부 작성 시작하기' 버튼 클릭 시 (가입된 그룹이 없을 때)
 const startCreating = () => {
-  console.log("가계부 작성 시작하기 (그룹 생성/참여 페이지) 클릭됨.");
-  // TODO: router.push('/group/onboarding'); 
+  router.push('/group/create'); 
 };
 
 const fetchGroupCount = async () => {

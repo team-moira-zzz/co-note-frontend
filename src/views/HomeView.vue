@@ -1,43 +1,104 @@
 <script setup>
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { isLoggedIn } from '@/stores/authStore'; 
+import axios from 'axios';
+import { isLoggedIn, getAccessToken, logout } from '@/stores/authStore';
 
 const router = useRouter();
+const groupCount = ref(null);
+const isLoading = ref(true);
 
-const startApp = () => {
-    router.push('/login');
+// 비로그인 사용자: '로그인하고 시작하기' 버튼 클릭 시
+const goToLogin = () => {
+  router.push('/login');
 };
 
-const startSolo = () => {
-    console.log("혼자 작성할래요 클릭됨.");
+// 로그인 사용자: '가계부 작성 시작하기' 버튼 클릭 시 (가입된 그룹이 없을 때)
+const startCreating = () => {
+  console.log("가계부 작성 시작하기 (그룹 생성/참여 페이지) 클릭됨.");
+  // TODO: router.push('/group/onboarding'); 
 };
 
-const startGroup = () => {
-    console.log("같이 작성할래요 클릭됨.");
+const fetchGroupCount = async () => {
+  // [1] 로그인이 되어 있지 않은 경우 return
+  if (!isLoggedIn.value) {
+    isLoading.value = false;
+    return;
+  }
+
+  // [2] AccessToken 추출
+  const token = getAccessToken();
+
+  // [3] AccessToken이 유효하지 않은 경우 return
+  if (!token) {
+    isLoading.value = false;
+    return;
+  }
+
+  // [4] 백엔드 API 호출 (해당 유저의 가입 그룹 수를 계산)
+  try {
+    const response = await axios.get(`http://localhost:8080/api/book/group/count`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    groupCount.value = response.data;
+  } catch (error) {
+    console.error("그룹 수 조회 API 호출 실패:", error);
+
+    // [5] 토큰 만료 (401 Unauthorized) 처리 로직
+    if (error.response && error.response.status === 401) {
+      logout();
+
+      router.push({
+        path: '/login',
+        query: { expired: 'true' }
+      });
+
+      isLoading.value = false;
+      return;
+    }
+
+    groupCount.value = 0;
+  } finally {
+    if (groupCount.value !== null) {
+      isLoading.value = false;
+    }
+  }
 };
+
+onMounted(() => {
+  fetchGroupCount();
+});
 </script>
 
 <template>
   <div class="home-container">
-    <div v-if="isLoggedIn" class="logged-in-content">
-      <h1>같이 작성하는 가계부, 'Co-Note' 입니다.</h1>
-      <p class="subtitle">지금 시작하세요!</p>
-      
-      <div v-if="false" class="group-list">
-        </div>
-      
-      <div v-else class="start-buttons">
-        <button @click="startSolo" class="start-btn solo">혼자 작성할래요</button>
-        <button @click="startGroup" class="start-btn group">같이 작성할래요</button>
-      </div>
-    </div>
-    
-    <div v-else class="logged-out-content">
-      <h1>같이 작성하는 가계부, 'Co-Note' 입니다!</h1>
-      <p class="subtitle">지금 시작하세요.</p>
-      <button @click="startApp" class="start-btn primary">시작하기</button>
+    <div v-if="isLoading" class="loading-content">
+      <h1>잠시만 기다려 주세요...</h1>
     </div>
 
+    <div v-else-if="isLoggedIn" class="logged-in-content">
+      <h1>함께 만들어가는 가계부, Co-Note!</h1>
+      <p class="subtitle">시작할 준비가 되었어요.</p>
+      <div class="start-buttons">
+        <div v-if="groupCount > 0">
+          <p class="status-message"><strong>{{ groupCount }}개의</strong> 가계부 그룹에 참여 중입니다.</p>
+          <button @click="router.push('/groups')" class="start-btn primary">그룹 목록 보기</button>
+        </div>
+
+        <div v-else>
+          <button @click="startCreating" class="start-btn primary">가계부 작성 시작하기</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="logged-out-content">
+      <h1>함께 기록해요! Co-Note에서 가계부 작성을 시작하세요.</h1>
+      <p class="subtitle">소셜 로그인을 통해 10초 만에 시작할 수 있어요.</p>
+      <button @click="goToLogin" class="start-btn primary">로그인하고 시작하기</button>
+    </div>
   </div>
 </template>
 
@@ -47,7 +108,7 @@ const startGroup = () => {
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  min-height: calc(100vh - 60px); 
+  min-height: calc(100vh - 60px);
   width: 100%;
   padding-top: 100px;
   text-align: center;
@@ -60,15 +121,20 @@ h1 {
 }
 
 .subtitle {
-    font-size: 1.5em;
-    color: #555;
-    margin-bottom: 40px;
+  font-size: 1.5em;
+  color: #555;
+  margin-bottom: 40px;
 }
 
 .start-buttons {
   display: flex;
-  gap: 20px;
   justify-content: center;
+}
+
+.status-message {
+  font-size: 1.1em;
+  color: #555;
+  margin-bottom: 15px;
 }
 
 .start-btn {
@@ -81,24 +147,17 @@ h1 {
 }
 
 .start-btn:active {
-    transform: scale(0.98);
+  transform: scale(0.98);
 }
 
-.start-btn.primary, .start-btn.group {
+.start-btn.primary,
+.start-btn.group {
   background-color: #3498db;
   color: white;
 }
 
-.start-btn.solo {
-  background-color: #bdc3c7;
-  color: #333;
-}
-
-.start-btn.primary:hover, .start-btn.group:hover {
+.start-btn.primary:hover,
+.start-btn.group:hover {
   background-color: #2980b9;
-}
-
-.start-btn.solo:hover {
-    background-color: #95a5a6;
 }
 </style>

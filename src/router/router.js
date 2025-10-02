@@ -4,6 +4,7 @@ import LoginView from '../views/LoginView.vue'
 import KakaoCallbackView from '../views/KakaoCallbackView.vue'
 import NaverCallbackView from '../views/NaverCallbackView.vue'
 import GroupCreateView from '../views/GroupCreateView.vue'
+import AccountBookView from '../views/AccountBookView.vue'
 
 const routes = [
     {
@@ -30,6 +31,11 @@ const routes = [
         path: '/group/create',
         name: 'create-group',
         component: GroupCreateView
+    },
+    {
+        path: '/book',
+        name: 'account-book',
+        component: AccountBookView
     }
 ]
 
